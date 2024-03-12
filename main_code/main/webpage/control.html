@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            /* Limit max width for larger devices */
+            padding: 20px;
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+        }
+
+        .slider-container#steering-container {
+            flex-direction: row;
+        }
+
+        .slider {
+            margin: 10px;
+        }
+
+        .slider#steering {
+            width: 200px;
+            /* Adjust width for easier touch on mobile */
+        }
+
+        .slider#speed {
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            height: 200px;
+            /* Increase height for easier touch on mobile */
+        }
+
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        span {
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="control-panel">
+        <div class="slider-container" id="steering-container">
+            <label for="steering">Steering Angle</label>
+            <input type="range" id="steering" min="-23" max="23" value="0" class="slider">
+            <span id="steeringValue">0</span>
+        </div>
+        <div class="slider-container">
+            <label for="speed">Speed</label>
+            <input type="range" id="speed" min="-100" max="100" value="0" class="slider" orient="vertical">
+            <span id="speedValue">0</span>
+        </div>
+    </div>
+
+    <script>
+        const wsUrl = 'ws://192.168.4.1:80/ws';
+        const websocket = new WebSocket(wsUrl);
+        let flagSent = true;
+        document.addEventListener('DOMContentLoaded', () => {
+            const steeringSlider = document.getElementById('steering');
+            const speedSlider = document.getElementById('speed');
+            const steeringValueDisplay = document.getElementById('steeringValue');
+            const speedValueDisplay = document.getElementById('speedValue');
+            setInterval(function () {
+                if (flagSent) flagSent = false;
+                else flagSent = true;
+            }, 300);
+            function sendSliderData() {
+                if (websocket.readyState === WebSocket.OPEN) {
+                    const data = {
+                        steering: steeringSlider.value,
+                        speed: speedSlider.value
+                    };
+                    console.log("Sending data:", data);
+                    websocket.send(JSON.stringify(data));
+                }
+            }
+            function updateSlider(slider, display) {
+                slider.addEventListener('input', () => {
+                    display.textContent = slider.value;
+                    if (flagSent) sendSliderData();
+                });
+                slider.addEventListener('change', () => {
+                    slider.value = 0;
+                    display.textContent = '0';
+                    sendSliderData();
+                });
+            }
+            websocket.onopen = function (event) {
+                console.log("Connected to WebSocket");
+            };
+
+            websocket.onerror = function (event) {
+                console.error("WebSocket error observed:", event);
+            };
+
+            websocket.onmessage = function (event) {
+                console.log("Message from server:", event.data);
+            };
+            updateSlider(steeringSlider, steeringValueDisplay);
+            updateSlider(speedSlider, speedValueDisplay);
+        });
+    </script>
+</body>
+
+</html>

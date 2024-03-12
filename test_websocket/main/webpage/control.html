@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Car Control Panel</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #eaeaea;
+        }
+
+        #control-panel {
+            display: flex;
+            width: 400px;
+            height: 300px;
+            border: 2px solid #333;
+            border-radius: 15px;
+            background-color: #fff;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #steering-control {
+            width: 200px;
+            height: 100px;
+            background-color: #ddd;
+            border-top-left-radius: 100px;
+            border-top-right-radius: 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #half-circle-slider {
+            -webkit-appearance: none;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: transparent;
+            outline: none;
+        }
+
+        .circle-indicator {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: blue;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+        }
+
+        #move-slider {
+            -webkit-appearance: slider-vertical;
+            width: 50px;
+            height: 150px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="control-panel">
+        <div id="steering-control" class="control">
+            <input type="range" id="half-circle-slider" min="0" max="180" value="90">
+            <div id="indicator" class="circle-indicator"></div>
+        </div>
+        <div id="movement-control" class="control">
+            <input type="range" id="move-slider" min="-100" max="100" orient="vertical">
+        </div>
+    </div>
+    <script>
+        // WebSocket setup
+        //var socket = new WebSocket('ws://192.168.4.1:80/ws');
+        socket.onopen = function (event) {
+            console.log("Connected to WebSocket server.");
+        };
+        socket.onclose = function (event) {
+            console.log("Disconnected from WebSocket server.");
+        };
+        socket.onerror = function (error) {
+            console.error("WebSocket error:", error);
+        };
+
+        const halfCircleSlider = document.getElementById('half-circle-slider');
+        const moveSlider = document.getElementById('move-slider');
+        const indicator = document.getElementById('indicator');
+
+        // Function to send data via WebSocket
+        function sendControlData(control, value) {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ control: control, value: value }));
+            } else {
+                console.error("WebSocket is not connected.");
+            }
+        }
+
+        // Event listeners for controls
+        halfCircleSlider.addEventListener('input', function (e) {
+            // ... (existing code to update indicator) ...
+            sendControlData('steering', e.target.value);
+        });
+
+        moveSlider.addEventListener('input', function (e) {
+            sendControlData('movement', e.target.value);
+        });
+    </script>
+</body>
+
+</html>
