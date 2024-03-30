@@ -1,4 +1,3 @@
-
 #include <esp_event.h>
 #include <esp_log.h>
 #include <esp_system.h>
@@ -105,49 +104,52 @@ static esp_err_t echo_handler(httpd_req_t *req)
         }
         ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
 
-        // const char *ws_payload = (const char *)ws_pkt.payload;
-        // cJSON *root = cJSON_Parse(ws_payload);
-        // char *steering_msg = cJSON_GetObjectItem(root, "steering")->valuestring;
-        // char *speed_msg = cJSON_GetObjectItem(root, "speed")->valuestring;
-        // // ESP_LOGI(TAG, "steer: %s, speed: %s", steering_msg, speed_msg);
-        // // Send CAN here
-        // char steer_data[MAX_LENGTH_DATA];
-        // char eng_data[MAX_LENGTH_DATA];
-        // sprintf(steer_data, "#%d=%f\r\n", ID_TARGET_STEER_CTRL_NODE, atof(steering_msg));
-        // // ESP_LOGI(TAG, "%s", data);
-        // twai_msg steer_msg = {
-        //     .type_id = {
-        //         .msg_type = ID_MSG_TYPE_CMD_FRAME,
-        //         .target_type = ID_TARGET_STEER_CTRL_NODE,
-        //     },
-        //     .msg = steer_data,
-        //     .msg_len = strlen(steer_data),
-        // };
+        const char *ws_payload = (const char *)ws_pkt.payload;
+        cJSON *root = cJSON_Parse(ws_payload);
+        if (root != NULL)
+        {
+            cJSON *steering_msg = cJSON_GetObjectItemCaseSensitive(root, "steering");
+            cJSON *speed_msg = cJSON_GetObjectItemCaseSensitive(root, "speed");
+            int speed = speed_msg->valueint * 2;
+            int steering = steering_msg->valueint * 5;
+            ESP_LOGI(TAG, "steer: %d, speed: %d", steering, speed);
+            // Send CAN here
+            char steer_data[MAX_LENGTH_DATA];
+            char eng_data[MAX_LENGTH_DATA];
+            sprintf(steer_data, "#%d=%d\r\n", ID_TARGET_STEER_CTRL_NODE, steering);
+            twai_msg steer_msg = {
+                .type_id = {
+                    .msg_type = ID_MSG_TYPE_CMD_FRAME,
+                    .target_type = ID_TARGET_STEER_CTRL_NODE,
+                },
+                .msg = steer_data,
+                .msg_len = strlen(steer_data),
+            };
 
-        // sprintf(eng_data, "#%d=%f\r\n", ID_TARGET_EGN_CTRL_NODE, atof(speed_msg));
-        // twai_msg egn_msg = {
-        //     .type_id = {
-        //         .msg_type = ID_MSG_TYPE_CMD_FRAME,
-        //         .target_type = ID_TARGET_EGN_CTRL_NODE,
-        //     },
-        //     .msg = eng_data,
-        //     .msg_len = strlen(eng_data),
-        // };
-        // twai_transmit_msg(&steer_msg);
-        // twai_transmit_msg(&egn_msg);
-        // twai_alert_all();
-        // if (node_send == 0)
-        // {
-        //     twai_transmit_msg(&egn_msg);
-        //     node_send = 1;
-        //     ESP_LOGI("Speed node", "speed: %s", speed_msg);
-        // }
-        // else
-        // {
-        //     twai_transmit_msg(&steer_msg);
-        //     node_send = 0;
-        //     ESP_LOGI("Steer node", "steer: %s", steering_msg);
-        // }
+            sprintf(eng_data, "#%d=%d\r\n", ID_TARGET_EGN_CTRL_NODE, speed);
+            twai_msg egn_msg = {
+                .type_id = {
+                    .msg_type = ID_MSG_TYPE_CMD_FRAME,
+                    .target_type = ID_TARGET_EGN_CTRL_NODE,
+                },
+                .msg = eng_data,
+                .msg_len = strlen(eng_data),
+            };
+            twai_transmit_msg(&steer_msg);
+            twai_transmit_msg(&egn_msg);
+            // if (node_send == 0)
+            // {
+            //     twai_transmit_msg(&egn_msg);
+            //     node_send = 1;
+            //     ESP_LOGI("Speed node", "speed: %d", speed);
+            // }
+            // else
+            // {
+            //     twai_transmit_msg(&steer_msg);
+            //     node_send = 0;
+            //     ESP_LOGI("Steer node", "steer: %d", steering);
+            // }
+        }
     }
     ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
     if (ws_pkt.type == HTTPD_WS_TYPE_TEXT &&

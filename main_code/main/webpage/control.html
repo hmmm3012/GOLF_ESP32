@@ -3,131 +3,278 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Panel</title>
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <title>Vehicle Control Panel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
-
-        .control-panel {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            width: 100%;
-            max-width: 600px;
-            /* Limit max width for larger devices */
-            padding: 20px;
-        }
-
-        .slider-container {
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 10px;
-        }
-
-        .slider-container#steering-container {
-            flex-direction: row;
-        }
-
-        .slider {
-            margin: 10px;
-        }
-
-        .slider#steering {
-            width: 200px;
-            /* Adjust width for easier touch on mobile */
-        }
-
-        .slider#speed {
-            writing-mode: bt-lr;
-            -webkit-appearance: slider-vertical;
-            height: 200px;
-            /* Increase height for easier touch on mobile */
-        }
-
-        label {
-            font-size: 16px;
-            margin-bottom: 5px;
         }
 
         span {
-            display: block;
-            margin-top: 5px;
+            font-size: 50px
+        }
+        h1 {
+            text-align: center;
+            color: blue;
+            margin: 10px 0; /* Adjust the top margin to space out the title */
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 600px;
+            /*padding: 10px;*/
+            box-sizing: border-box;
+        }
+
+        .control-group {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 40px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            margin: 5px 0;
+            
+        }
+
+        .active {
+            background-color: blue;
+            color: white;
+        }
+
+        #brake,
+        #reset {
+            width: 50%;
+            padding: 15px;
+            font-size: 20px;
+            margin: 0 auto;
+            margin-top: 10px;
+        }
+
+        #brake {
+            background-color: red;
+            color: white;
+        }
+
+        #reset {
+            background-color: gray;
+            color: white;
+        }
+
+
+        #movement-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            /* Space between buttons */
+        }
+
+        #horizontal-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            /* Space between buttons */
+        }
+
+        button {
+            padding: 10px 20px;
+            /* Adjust padding for better tap targets */
+            margin: 2px;
+            /* Space between buttons */
+        }
+
+        #front {
+            background-color: orange;
+        }
+
+        #back {
+            background-color: red;
+        }
+
+        #left,
+        #right {
+            background-color: yellow;
+        }
+
+        #horn {
+            background-color: green;
+            /* Example color for the horn button */
         }
     </style>
 </head>
 
 <body>
-    <div class="control-panel">
-        <div class="slider-container" id="steering-container">
-            <label for="steering">Steering Angle</label>
-            <input type="range" id="steering" min="-23" max="23" value="0" class="slider">
-            <span id="steeringValue">0</span>
+    <h1>UIT CAR CONTROL</h1>
+    <div class="container">
+        <div class="control-group">
+            <div class="controls" id="angle-control">
+                <button class="increase">+</button>
+                <span id="angle-value">0</span>
+                <button class="decrease">-</button>
+                <h2>Angle</h2>
+            </div>
+
+            <div class="controls" id="speed-control">
+                <button class="increase">+</button>
+                <span id="speed-value">0</span>
+                <button class="decrease">-</button>
+                <h2>Speed</h2>
+            </div>
         </div>
-        <div class="slider-container">
-            <label for="speed">Speed</label>
-            <input type="range" id="speed" min="-100" max="100" value="0" class="slider" orient="vertical">
-            <span id="speedValue">0</span>
+
+        <button id="brake">Brake</button>
+        <button id="reset">Reset</button>
+        <div class="controls" id="movement-controls">
+            <button id="front">F</button>
+            <div id="horizontal-controls">
+                <button id="left">L</button>
+                <button id="horn">H</button>
+                <button id="right">R</button>
+            </div>
+            <button id="back">B</button>
         </div>
+
     </div>
 
     <script>
-        const wsUrl = 'ws://192.168.4.1:80/ws';
-        const websocket = new WebSocket(wsUrl);
-        let flagSent = true;
-        document.addEventListener('DOMContentLoaded', () => {
-            const steeringSlider = document.getElementById('steering');
-            const speedSlider = document.getElementById('speed');
-            const steeringValueDisplay = document.getElementById('steeringValue');
-            const speedValueDisplay = document.getElementById('speedValue');
-            setInterval(function () {
-                if (flagSent) flagSent = false;
-                else flagSent = true;
-            }, 300);
-            function sendSliderData() {
-                if (websocket.readyState === WebSocket.OPEN) {
-                    const data = {
-                        steering: steeringSlider.value,
-                        speed: speedSlider.value
-                    };
-                    console.log("Sending data:", data);
-                    websocket.send(JSON.stringify(data));
+        const ws = new WebSocket('ws://192.168.4.1/ws');
+
+        ws.onopen = function () {
+            console.log('WebSocket connection established');
+        };
+
+        ws.onerror = function (error) {
+            console.log('WebSocket Error: ' + error);
+        };
+
+        // Function to send speed and steer values
+        function sendControlValues() {
+            <!-- console.log(JSON.stringify({ speed: speed.value, steer: angle.value })); -->
+            if (ws.readyState === WebSocket.OPEN) {
+                const message = JSON.stringify({ speed: speed.value, steering: angle.value });
+                ws.send(message);
+            } else {
+                console.log('WebSocket is not open. Cannot send message.');
+            }
+        }
+
+        const speed = { value: 0, min: -10, max: 10, id: 'speed-value' };
+        const angle = { value: 0, min: -5, max: 5, id: 'angle-value' };
+
+        function updateValue(control, change, button) {
+            control.value += change;
+            if (control.value < control.min) control.value = control.min;
+            if (control.value > control.max) control.value = control.max;
+            document.getElementById(control.id).innerText = control.value;
+            sendControlValues();
+
+            button.classList.add('active');
+            setTimeout(() => button.classList.remove('active'), 200);
+        }
+
+        document.querySelectorAll('.control-group .controls').forEach(group => {
+            const control = group.id === 'speed-control' ? speed : angle;
+
+            group.querySelector('.increase').addEventListener('click', function () {
+                updateValue(control, 1, this);
+            });
+
+            group.querySelector('.decrease').addEventListener('click', function () {
+                updateValue(control, -1, this);
+            });
+        });
+
+        document.getElementById('brake').addEventListener('click', function () {
+            // Determine the brake state based on the button's color and toggle it
+            const isBraking = this.style.backgroundColor === 'green'; // Brake is not engaged if green
+
+            // Toggle the brake state and button appearance
+            if (isBraking) {
+                // Now engage brake
+                this.style.backgroundColor = 'red';
+                this.style.color = 'white';
+                sendControlValues({ brake: 1 }); // Send message indicating braking is engaged
+            } else {
+                // Disengage brake
+                this.style.backgroundColor = 'green';
+                this.style.color = 'black'; // Adjust for visibility if necessary
+                sendControlValues({ brake: 0 }); // Send message indicating braking is not engaged
+            }
+
+            // Your existing code to reset the speed value or other related actions
+            speed.value = 0;
+            document.getElementById(speed.id).innerText = speed.value;
+
+            // Add active class for visual feedback, if needed
+            this.classList.add('active');
+            setTimeout(() => this.classList.remove('active'), 200);
+        });
+
+        document.getElementById('reset').addEventListener('click', function () {
+            speed.value = 0;
+            angle.value = 0;
+            document.getElementById(speed.id).innerText = speed.value;
+            document.getElementById(angle.id).innerText = angle.value;
+            sendControlValues();
+             document.getElementById('horn').style.backgroundColor = 'gray';
+            document.getElementById('left').style.backgroundColor = 'gray';
+            document.getElementById('right').style.backgroundColor = 'gray';
+            this.classList.add('active');
+            setTimeout(() => this.classList.remove('active'), 200);
+        });
+        function toggleButtonColor(button, originalColor) {
+                // Check the current background color and change it
+                if (button.style.backgroundColor === 'gray') {
+                    button.style.backgroundColor = originalColor;
+                } else {
+                    button.style.backgroundColor = 'gray';
                 }
             }
-            function updateSlider(slider, display) {
-                slider.addEventListener('input', () => {
-                    display.textContent = slider.value;
-                    if (flagSent) sendSliderData();
-                });
-                slider.addEventListener('change', () => {
-                    slider.value = 0;
-                    display.textContent = '0';
-                    sendSliderData();
-                });
-            }
-            websocket.onopen = function (event) {
-                console.log("Connected to WebSocket");
-            };
 
-            websocket.onerror = function (event) {
-                console.error("WebSocket error observed:", event);
-            };
-
-            websocket.onmessage = function (event) {
-                console.log("Message from server:", event.data);
-            };
-            updateSlider(steeringSlider, steeringValueDisplay);
-            updateSlider(speedSlider, speedValueDisplay);
-        });
+            // Adding click event listeners to each button
+            document.getElementById('front').addEventListener('click', function () {
+                sendControlValues({ action: "move", direction: "front" });
+                toggleButtonColor(this, 'orange');
+            });
+            document.getElementById('back').addEventListener('click', function () {
+                sendControlValues({ action: "move", direction: "back" });
+                toggleButtonColor(this, 'red');
+            });
+            document.getElementById('left').addEventListener('click', function () {
+                sendControlValues({ action: "move", direction: "left" });
+                toggleButtonColor(this, 'yellow');
+            });
+            document.getElementById('right').addEventListener('click', function () {
+                sendControlValues({ action: "move", direction: "right" });
+                toggleButtonColor(this, 'yellow');
+            });
+            document.getElementById('horn').addEventListener('click', function () {
+                sendControlValues({ action: "horn" });
+                toggleButtonColor(this, 'green'); // Assuming gray is the original color for the horn button
+            });
     </script>
+
 </body>
 
 </html>
