@@ -187,7 +187,7 @@
             }
         }
 
-        const speed = { value: 0, min: -10, max: 10, id: 'speed-value' };
+        const speed = { value: 0, min: -20, max: 20, id: 'speed-value' };
         const angle = { value: 0, min: -5, max: 5, id: 'angle-value' };
         const brake = 0
         function updateValue(control, change, button) {
@@ -203,13 +203,13 @@
 
         document.querySelectorAll('.control-group .controls').forEach(group => {
             const control = group.id === 'speed-control' ? speed : angle;
-
+            const increaseValue = control == speed ? 2 : 1;
             group.querySelector('.increase').addEventListener('click', function () {
-                updateValue(control, 1, this);
+                updateValue(control, increaseValue, this);
             });
 
             group.querySelector('.decrease').addEventListener('click', function () {
-                updateValue(control, -1, this);
+                updateValue(control, -increaseValue, this);
             });
         });
 
