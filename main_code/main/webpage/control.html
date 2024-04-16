@@ -20,11 +20,14 @@
         span {
             font-size: 50px
         }
+
         h1 {
             text-align: center;
             color: blue;
-            margin: 10px 0; /* Adjust the top margin to space out the title */
+            margin: 10px 0;
+            /* Adjust the top margin to space out the title */
         }
+
         .container {
             display: flex;
             flex-direction: column;
@@ -54,7 +57,7 @@
             border-radius: 5px;
             background-color: #f0f0f0;
             margin: 5px 0;
-            
+
         }
 
         .active {
@@ -169,11 +172,16 @@
         };
 
         // Function to send speed and steer values
-        function sendControlValues() {
-            <!-- console.log(JSON.stringify({ speed: speed.value, steer: angle.value })); -->
+        function sendControlValues(msg) {
             if (ws.readyState === WebSocket.OPEN) {
-                const message = JSON.stringify({ speed: speed.value, steering: angle.value });
-                ws.send(message);
+                if (msg) {
+                    console.log('Sending message:', msg);
+                    ws.send(JSON.stringify(msg));
+                    return;
+                } else if (brake != 1) {
+                    const message = JSON.stringify({ speed: speed.value, steering: angle.value * 5 });
+                    ws.send(message);
+                }
             } else {
                 console.log('WebSocket is not open. Cannot send message.');
             }
@@ -181,7 +189,7 @@
 
         const speed = { value: 0, min: -10, max: 10, id: 'speed-value' };
         const angle = { value: 0, min: -5, max: 5, id: 'angle-value' };
-
+        const brake = 0
         function updateValue(control, change, button) {
             control.value += change;
             if (control.value < control.min) control.value = control.min;
@@ -214,11 +222,13 @@
                 // Now engage brake
                 this.style.backgroundColor = 'red';
                 this.style.color = 'white';
+                brake = 1
                 sendControlValues({ brake: 1 }); // Send message indicating braking is engaged
             } else {
                 // Disengage brake
                 this.style.backgroundColor = 'green';
-                this.style.color = 'black'; // Adjust for visibility if necessary
+                this.style.color = 'black';
+                brake = 0// Adjust for visibility if necessary
                 sendControlValues({ brake: 0 }); // Send message indicating braking is not engaged
             }
 
@@ -237,42 +247,42 @@
             document.getElementById(speed.id).innerText = speed.value;
             document.getElementById(angle.id).innerText = angle.value;
             sendControlValues();
-             document.getElementById('horn').style.backgroundColor = 'gray';
+            document.getElementById('horn').style.backgroundColor = 'gray';
             document.getElementById('left').style.backgroundColor = 'gray';
             document.getElementById('right').style.backgroundColor = 'gray';
             this.classList.add('active');
             setTimeout(() => this.classList.remove('active'), 200);
         });
         function toggleButtonColor(button, originalColor) {
-                // Check the current background color and change it
-                if (button.style.backgroundColor === 'gray') {
-                    button.style.backgroundColor = originalColor;
-                } else {
-                    button.style.backgroundColor = 'gray';
-                }
+            // Check the current background color and change it
+            if (button.style.backgroundColor === 'gray') {
+                button.style.backgroundColor = originalColor;
+            } else {
+                button.style.backgroundColor = 'gray';
             }
+        }
 
-            // Adding click event listeners to each button
-            document.getElementById('front').addEventListener('click', function () {
-                sendControlValues({ action: "move", direction: "front" });
-                toggleButtonColor(this, 'orange');
-            });
-            document.getElementById('back').addEventListener('click', function () {
-                sendControlValues({ action: "move", direction: "back" });
-                toggleButtonColor(this, 'red');
-            });
-            document.getElementById('left').addEventListener('click', function () {
-                sendControlValues({ action: "move", direction: "left" });
-                toggleButtonColor(this, 'yellow');
-            });
-            document.getElementById('right').addEventListener('click', function () {
-                sendControlValues({ action: "move", direction: "right" });
-                toggleButtonColor(this, 'yellow');
-            });
-            document.getElementById('horn').addEventListener('click', function () {
-                sendControlValues({ action: "horn" });
-                toggleButtonColor(this, 'green'); // Assuming gray is the original color for the horn button
-            });
+        // Adding click event listeners to each button
+        document.getElementById('front').addEventListener('click', function () {
+            sendControlValues();
+            toggleButtonColor(this, 'orange');
+        });
+        document.getElementById('back').addEventListener('click', function () {
+            sendControlValues();
+            toggleButtonColor(this, 'red');
+        });
+        document.getElementById('left').addEventListener('click', function () {
+            sendControlValues();
+            toggleButtonColor(this, 'yellow');
+        });
+        document.getElementById('right').addEventListener('click', function () {
+            sendControlValues();
+            toggleButtonColor(this, 'yellow');
+        });
+        document.getElementById('horn').addEventListener('click', function () {
+            sendControlValues();
+            toggleButtonColor(this, 'green');
+        });
     </script>
 
 </body>

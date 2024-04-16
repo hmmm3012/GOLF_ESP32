@@ -108,50 +108,57 @@ static esp_err_t echo_handler(httpd_req_t *req)
         cJSON *root = cJSON_Parse(ws_payload);
         if (root != NULL)
         {
-            cJSON *steering_msg = cJSON_GetObjectItemCaseSensitive(root, "steering");
+            cJSON *steering_msg = cJSON_GetObjectItemCaseSensitive(root, "steer");
             cJSON *speed_msg = cJSON_GetObjectItemCaseSensitive(root, "speed");
-            int speed = speed_msg->valueint * 2;
-            int steering = steering_msg->valueint * 5;
-            ESP_LOGI(TAG, "steer: %d, speed: %d", steering, speed);
-            // Send CAN here
-            char steer_data[MAX_LENGTH_DATA];
-            char eng_data[MAX_LENGTH_DATA];
-            sprintf(steer_data, "#%d=%d\r\n", ID_TARGET_STEER_CTRL_NODE, steering);
-            twai_msg steer_msg = {
-                .type_id = {
-                    .msg_type = ID_MSG_TYPE_CMD_FRAME,
-                    .target_type = ID_TARGET_STEER_CTRL_NODE,
-                },
-                .msg = steer_data,
-                .msg_len = strlen(steer_data),
-            };
+            cJSON *brake_msg = cJSON_GetObjectItemCaseSensitive(root, "brake");
+            if (brake_msg != NULL)
+            {
+                // Send CAN here
+                char brake_data[MAX_LENGTH_DATA];
+                sprintf(brake_data, "#%d=%d!\r\n", ID_TARGET_EGN_CTRL_NODE, brake_msg->valueint);
+                twai_msg brake_msg = {
+                    .type_id = {
+                        .msg_type = ID_MSG_TYPE_CMD_FRAME,
+                        .target_type = ID_TARGET_EGN_CTRL_NODE,
+                    },
+                    .msg = brake_data,
+                    .msg_len = strlen(brake_data),
+                };
+                twai_transmit_msg(&brake_msg);
+            }
+            else if (steering_msg != NULL && speed_msg != NULL)
+            {
+                int speed = speed_msg->valueint ;
+                int steering = steering_msg->value;
+                printf("Speed: %d, Steering: %d\n", speed, steering);
+                // Send CAN here
+                char steer_data[MAX_LENGTH_DATA];
+                char eng_data[MAX_LENGTH_DATA];
+                sprintf(steer_data, "#%d=%d\r\n", ID_TARGET_STEER_CTRL_NODE, steering);
+                twai_msg steer_msg = {
+                    .type_id = {
+                        .msg_type = ID_MSG_TYPE_CMD_FRAME,
+                        .target_type = ID_TARGET_STEER_CTRL_NODE,
+                    },
+                    .msg = steer_data,
+                    .msg_len = strlen(steer_data),
+                };
 
-            sprintf(eng_data, "#%d=%d\r\n", ID_TARGET_EGN_CTRL_NODE, speed);
-            twai_msg egn_msg = {
-                .type_id = {
-                    .msg_type = ID_MSG_TYPE_CMD_FRAME,
-                    .target_type = ID_TARGET_EGN_CTRL_NODE,
-                },
-                .msg = eng_data,
-                .msg_len = strlen(eng_data),
-            };
-            twai_transmit_msg(&steer_msg);
-            twai_transmit_msg(&egn_msg);
-            // if (node_send == 0)
-            // {
-            //     twai_transmit_msg(&egn_msg);
-            //     node_send = 1;
-            //     ESP_LOGI("Speed node", "speed: %d", speed);
-            // }
-            // else
-            // {
-            //     twai_transmit_msg(&steer_msg);
-            //     node_send = 0;
-            //     ESP_LOGI("Steer node", "steer: %d", steering);
-            // }
+                sprintf(eng_data, "#%d=%d\r\n", ID_TARGET_EGN_CTRL_NODE, speed);
+                twai_msg egn_msg = {
+                    .type_id = {
+                        .msg_type = ID_MSG_TYPE_CMD_FRAME,
+                        .target_type = ID_TARGET_EGN_CTRL_NODE,
+                    },
+                    .msg = eng_data,
+                    .msg_len = strlen(eng_data),
+                };
+                twai_transmit_msg(&steer_msg);
+                twai_transmit_msg(&egn_msg);
+            }
         }
     }
-    ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
+    // ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
     if (ws_pkt.type == HTTPD_WS_TYPE_TEXT &&
         strcmp((char *)ws_pkt.payload, "Trigger async") == 0)
     {
@@ -159,11 +166,11 @@ static esp_err_t echo_handler(httpd_req_t *req)
         return trigger_async_send(req->handle, req);
     }
 
-    ret = httpd_ws_send_frame(req, &ws_pkt);
-    if (ret != ESP_OK)
-    {
-        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
-    }
+    // ret = httpd_ws_send_frame(req, &ws_pkt);
+    // if (ret != ESP_OK)
+    // {
+    //     ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
+    // }
     free(buf);
     return ret;
 }

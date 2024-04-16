@@ -8,8 +8,8 @@
 #define EXAMPLE_ESP_MAXIMUM_RETRY 1
 #define ESP_WIFI_AP_SSID "GOLF CAR"
 #define ESP_WIFI_AP_PASSWD ""
-#define WIFI_SSID "UIT_CAR_RACING_2023"
-#define WIFI_PASS "sinhvien_CEEC"
+#define WIFI_SSID "MQ_Network"
+#define WIFI_PASS "1denmuoi1"
 #define ESP_WIFI_CHANNEL 1
 #define MAX_STA_CONN 1
 
