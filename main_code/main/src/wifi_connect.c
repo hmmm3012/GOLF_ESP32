@@ -98,27 +98,27 @@ void wifi_init(void)
     };
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_sta_config));
 
-    esp_netif_create_default_wifi_ap();
-    wifi_config_t wifi_ap_config = {
-        .ap = {
-            .ssid = ESP_WIFI_AP_SSID,
-            .ssid_len = strlen(ESP_WIFI_AP_SSID),
-            .channel = ESP_WIFI_CHANNEL,
-            .password = ESP_WIFI_AP_PASSWD,
-            .max_connection = MAX_STA_CONN,
-            .authmode = WIFI_AUTH_WPA2_PSK,
-        },
-    };
-    if (strlen(ESP_WIFI_AP_PASSWD) == 0)
-    {
-        wifi_ap_config.ap.authmode = WIFI_AUTH_OPEN;
-    }
+    // esp_netif_create_default_wifi_ap();
+    // wifi_config_t wifi_ap_config = {
+    //     .ap = {
+    //         .ssid = ESP_WIFI_AP_SSID,
+    //         .ssid_len = strlen(ESP_WIFI_AP_SSID),
+    //         .channel = ESP_WIFI_CHANNEL,
+    //         .password = ESP_WIFI_AP_PASSWD,
+    //         .max_connection = MAX_STA_CONN,
+    //         .authmode = WIFI_AUTH_WPA2_PSK,
+    //     },
+    // };
+    // if (strlen(ESP_WIFI_AP_PASSWD) == 0)
+    // {
+    //     wifi_ap_config.ap.authmode = WIFI_AUTH_OPEN;
+    // }
 
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_config));
+    // ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_config));
 
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "wifi_init_sta finished.");
+    // ESP_LOGI(TAG, "wifi_init_sta finished.");
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */

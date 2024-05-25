@@ -65,6 +65,7 @@
             color: white;
         }
 
+        #automatic,
         #brake,
         #reset {
             width: 50%;
@@ -148,6 +149,7 @@
 
         <button id="brake">Brake</button>
         <button id="reset">Reset</button>
+        <button id="automatic">Automatic</button>
         <div class="controls" id="movement-controls">
             <button id="front">F</button>
             <div id="horizontal-controls">
@@ -161,8 +163,7 @@
     </div>
 
     <script>
-        const ws = new WebSocket('ws://192.168.4.1/ws');
-
+        const ws = new WebSocket('ws://192.168.2.144/manual');
         ws.onopen = function () {
             console.log('WebSocket connection established');
         };
@@ -175,13 +176,13 @@
         function sendControlValues(msg) {
             if (ws.readyState === WebSocket.OPEN) {
                 if (msg) {
-                    console.log('Sending message:', msg);
                     ws.send(JSON.stringify(msg));
                     return;
                 } else if (brake != 1) {
-                    const message = JSON.stringify({ speed: speed.value, steering: angle.value * 5 });
-                    ws.send(message);
+                    msg = JSON.stringify({ speed: speed.value, steer: angle.value * 5 });
+                    ws.send(msg);
                 }
+                console.log('Message sent:', msg);
             } else {
                 console.log('WebSocket is not open. Cannot send message.');
             }
@@ -253,6 +254,22 @@
             this.classList.add('active');
             setTimeout(() => this.classList.remove('active'), 200);
         });
+
+        document.getElementById('automatic').addEventListener('click', function () {
+            const isAutomatic = this.style.backgroundColor === 'green';
+            if (isAutomatic) {
+                this.style.backgroundColor = 'red';
+                this.style.color = 'white';
+                //isAutomatic = 1
+                sendControlValues({ automatic: 0 }); // Send message indicating braking is engaged
+            } else {
+                this.style.backgroundColor = 'green';
+                this.style.color = 'black';
+                //isAutomatic = 0
+                sendControlValues({ automatic: 1 }); // Send message indicating braking is not engaged
+            }
+        });
+
         function toggleButtonColor(button, originalColor) {
             // Check the current background color and change it
             if (button.style.backgroundColor === 'gray') {

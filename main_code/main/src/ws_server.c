@@ -11,6 +11,7 @@
 #include "twai_connect.h"
 #include "ws_server.h"
 static int node_send = 0;
+static int automatic = 0;
 static const char *TAG = "ws_echo_server";
 extern const unsigned char control_start[] asm("_binary_control_html_start");
 extern const unsigned char control_end[] asm("_binary_control_html_end");
@@ -72,6 +73,7 @@ static esp_err_t echo_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
         return ESP_OK;
     }
+    const char *mode = req->user_ctx;
     httpd_ws_frame_t ws_pkt;
     uint8_t *buf = NULL;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
@@ -84,6 +86,10 @@ static esp_err_t echo_handler(httpd_req_t *req)
         return ret;
     }
     ESP_LOGI(TAG, "frame len is %d", ws_pkt.len);
+    if (mode[0] == 'a' && automatic == 0)
+    {
+        return ESP_OK;
+    }
     if (ws_pkt.len)
     {
         /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
@@ -111,6 +117,8 @@ static esp_err_t echo_handler(httpd_req_t *req)
             cJSON *steering_msg = cJSON_GetObjectItemCaseSensitive(root, "steer");
             cJSON *speed_msg = cJSON_GetObjectItemCaseSensitive(root, "speed");
             cJSON *brake_msg = cJSON_GetObjectItemCaseSensitive(root, "brake");
+            cJSON *automatic_msg = cJSON_GetObjectItemCaseSensitive(root, "automatic");
+
             if (brake_msg != NULL)
             {
                 // Send CAN here
@@ -128,8 +136,8 @@ static esp_err_t echo_handler(httpd_req_t *req)
             }
             else if (steering_msg != NULL && speed_msg != NULL)
             {
-                int speed = speed_msg->valueint ;
-                int steering = steering_msg->value;
+                int speed = speed_msg->valueint;
+                int steering = steering_msg->valueint;
                 printf("Speed: %d, Steering: %d\n", speed, steering);
                 // Send CAN here
                 char steer_data[MAX_LENGTH_DATA];
@@ -156,6 +164,15 @@ static esp_err_t echo_handler(httpd_req_t *req)
                 twai_transmit_msg(&steer_msg);
                 twai_transmit_msg(&egn_msg);
             }
+            else if (automatic_msg != NULL)
+            {
+                automatic = automatic_msg->valueint;
+                printf("Automatic: %d\n", automatic);
+            }
+            else
+            {
+                ESP_LOGI(TAG, "RCV: %s", ws_payload);
+            }
         }
     }
     // ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
@@ -165,7 +182,6 @@ static esp_err_t echo_handler(httpd_req_t *req)
         free(buf);
         return trigger_async_send(req->handle, req);
     }
-
     // ret = httpd_ws_send_frame(req, &ws_pkt);
     // if (ret != ESP_OK)
     // {
@@ -183,14 +199,20 @@ static esp_err_t home_handler(httpd_req_t *req)
     ESP_LOGI(TAG, "Sent html");
     return ESP_OK;
 }
-static const httpd_uri_t ws = {
-    .uri = "/ws",
+static const httpd_uri_t ws_automatic = {
+    .uri = "/automatic",
     .method = HTTP_GET,
     .handler = echo_handler,
-    .user_ctx = NULL,
+    .user_ctx = "automatic",
     .is_websocket = true,
 };
-
+static const httpd_uri_t ws_manual = {
+    .uri = "/manual",
+    .method = HTTP_GET,
+    .handler = echo_handler,
+    .user_ctx = "manual",
+    .is_websocket = true,
+};
 static const httpd_uri_t home = {
     .uri = "/",
     .method = HTTP_GET,
@@ -209,7 +231,8 @@ httpd_handle_t start_webserver(void)
     {
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
-        httpd_register_uri_handler(server, &ws);
+        httpd_register_uri_handler(server, &ws_automatic);
+        httpd_register_uri_handler(server, &ws_manual);
         httpd_register_uri_handler(server, &home);
         return server;
     }
